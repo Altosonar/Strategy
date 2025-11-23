@@ -629,7 +629,6 @@
             font-weight: 700;
             padding: 4px 8px;
             border-radius: 4px;
-            background: var(--success);
             color: white;
         }
 
@@ -740,7 +739,7 @@
     <header class="calculator-header">
         <h1 class="calculator-title">
             <i class="fas fa-chart-line"></i>
-            Strategy
+            QuickTrade Strategy
         </h1>
         <div class="header-actions">
             <button class="header-btn" id="darkModeToggle" aria-label="Toggle Dark Mode">
@@ -947,19 +946,1328 @@
                     <h3 class="rule-title">Success Metrics</h3>
                     
                     <div class="success-metric">
-                        <span class="metric-label">Breakout + Pullback Entry</span>
-                        <span class="metric-value high">78% Win Rate</span>
+                        <span class="metric-label">Resistance Break + Pullback</span>
+                        <span class="metric-value high">92% Win Rate</span>
                     </div>
                     <div class="success-metric">
-                        <span class="metric-label">Resistance Break Entry</span>
-                        <span class="metric-value medium">65% Win Rate</span>
+                        <span class="metric-label">Best Entry Timing (10:00 AM)</span>
+                        <span class="metric-value high">76% Win Rate</span>
                     </div>
                     <div class="success-metric">
-                        <span class="metric-label">Support Bounce Entry</span>
-                        <span class="metric-value medium">62% Win Rate</span>
+                        <span class="metric-label">Optimal Trade Duration (18-20 min)</span>
+                        <span class="metric-value high">71% Win Rate</span>
                     </div>
                     <div class="success-metric">
-                        <span class="metric-label">FOMO Entry</span>
+                        <span class="metric-label">Optimal Contract Size (3-5)</span>
+                        <span class="metric-value high">85% Max PnL</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Long Bias Strategy</span>
+                        <span class="metric-value medium">67% Win Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Support Breakout Strategy</span>
+                        <span class="metric-value medium">82% Win Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Stop Loss Efficiency</span>
+                        <span class="metric-value medium">55% Hit Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">FOMO Entry (Avoid)</span>
+                        <span class="metric-value low">23% Win Rate</span>
+                    </div>
+                </div>
+                
+                <div class="rule-category">
+                    <h3 class="rule-title">Critical Rules</h3>
+                    <ul class="rule-list">
+                        <li>Enter on resistance break + pullback</li>
+                        <li>TP at <span id="plan-tp">3</span>R, SL at 1R</li>
+                        <li>Max 3 trades per session</li>
+                        <li>Stop after 2 consecutive losses</li>
+                        <li>Trade only 9:30-11 AM EST</li>
+                    </ul>
+                </div>
+                
+                <!-- Win Rate Projection -->
+                <div class="win-rate-projection">
+                    <div class="projection-label">Projected Win Rate Following Plan</div>
+                    <div class="projection-value" id="projected-win-rate">67%</div>
+                    <div class="projection-note">vs. your current <span id="current-win-rate">37.5%</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Trading session state
+    let tradingSession = {
+        totalTrades: 0,
+        wins: 0,
+        losses: 0,
+        remainingTrades: 0,
+        currentProfit: 0,
+        goalProfit: 0,
+        rewardPerTrade: 0,
+        riskPerTrade: 0,
+        neededWins: 0,
+        lastTradeResult: null, // Track consecutive losses
+        consecutiveLosses: 0
+    };
+
+    // Initialize the calculator when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCalculator();
+        setupEventListeners();
+        calculateGoal();
+        
+        // Load any existing session from localStorage
+        loadTradingSession();
+    });
+
+    function initializeCalculator() {
+        // Set up dark mode toggle
+        setupDarkModeToggle();
+    }
+
+    function setupEventListeners() {
+        // Add event listeners to all inputs for real-time calculation
+        const inputs = [
+            'account-capital', 
+            'risk-percentage', 
+            'goal-profit', 
+            'win-rate', 
+            'risk-reward'
+        ];
+        
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                updateStrategy();
+                // Only calculate full goal if we have all inputs
+                if (inputs.every(inputId => document.getElementById(inputId).value)) {
+                    calculateGoal();
+                }
+            });
+        });
+        
+        // Initialize strategy
+        updateStrategy();
+    }
+
+    function setupDarkModeToggle() {
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const icon = darkModeToggle.querySelector('i');
+        
+        darkModeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+            
+            // Save preference to localStorage
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        });
+        
+        // Check for saved dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+    }
+
+    function updateStrategy() {
+        // Get input values
+        const accountCapital = parseFloat(document.getElementById('account-capital').value) || 0;
+        const riskPercentage = parseFloat(document.getElementById('risk-percentage').value) || 0;
+        const riskReward = parseFloat(document.getElementById('risk-reward').value) || 0;
+        const winRate = parseFloat(document.getElementById('win-rate').value) || 0;
+        
+        // Calculate risk per trade
+        const riskPerTrade = accountCapital * (riskPercentage / 100);
+        document.getElementById('risk-per-trade').textContent = `$${riskPerTrade.toFixed(2)}`;
+        
+        // Calculate reward per trade
+        const rewardPerTrade = riskPerTrade * riskReward;
+        document.getElementById('reward-per-trade').textContent = `$${rewardPerTrade.toFixed(2)}`;
+        
+        // Calculate expected value per trade
+        const winProbability = winRate / 100;
+        const lossProbability = 1 - winProbability;
+        const expectedValue = (winProbability * rewardPerTrade) - (lossProbability * riskPerTrade);
+        document.getElementById('expected-value').textContent = `$${expectedValue.toFixed(2)}`;
+    }
+
+    function calculateGoal() {
+        // Get input values
+        const accountCapital = parseFloat(document.getElementById('account-capital').value) || 0;
+        const riskPercentage = parseFloat(document.getElementById('risk-percentage').value) || 0;
+        const goalProfit = parseFloat(document.getElementById('goal-profit').value) || 0;
+        const winRate = parseFloat(document.getElementById('win-rate').value) || 0;
+        const riskReward = parseFloat(document.getElementById('risk-reward').value) || 0;
+        
+        // Calculate risk per trade
+        const riskPerTrade = accountCapital * (riskPercentage / 100);
+        
+        // Calculate reward per trade
+        const rewardPerTrade = riskPerTrade * riskReward;
+        
+        // Calculate expected value per trade
+        const winProbability = winRate / 100;
+        const lossProbability = 1 - winProbability;
+        const expectedValue = (winProbability * rewardPerTrade) - (lossProbability * riskPerTrade);
+        
+        // Calculate number of trades needed to reach goal
+        let tradesNeeded = 0;
+        if (expectedValue > 0) {
+            tradesNeeded = Math.ceil(goalProfit / expectedValue);
+        } else {
+            tradesNeeded = 999; // If expected value is negative, goal is unrealistic
+        }
+        
+        // Calculate winning and losing trades
+        const winningTrades = Math.ceil(tradesNeeded * winProbability);
+        const losingTrades = tradesNeeded - winningTrades;
+        
+        // Calculate total risk capital
+        const totalRisk = losingTrades * riskPerTrade;
+        
+        // Calculate account after reaching goal
+        const accountAfterGoal = accountCapital + goalProfit;
+        
+        // Estimate time (assuming 8 trades per day for your strategy)
+        const timeDays = Math.ceil(tradesNeeded / 8);
+        const dailyProfit = goalProfit / timeDays;
+        
+        // Update UI with results
+        document.getElementById('trades-needed').textContent = tradesNeeded;
+        document.getElementById('winning-trades').textContent = winningTrades;
+        document.getElementById('losing-trades').textContent = losingTrades;
+        document.getElementById('time-days').textContent = timeDays;
+        document.getElementById('total-risk').textContent = `$${totalRisk.toFixed(2)}`;
+        document.getElementById('account-after-goal').textContent = `$${accountAfterGoal.toFixed(2)}`;
+        document.getElementById('daily-profit').textContent = `$${dailyProfit.toFixed(2)}`;
+        
+        // Update trading session with new values
+        tradingSession.remainingTrades = tradesNeeded;
+        tradingSession.goalProfit = goalProfit;
+        tradingSession.rewardPerTrade = rewardPerTrade;
+        tradingSession.riskPerTrade = riskPerTrade;
+        tradingSession.neededWins = winningTrades;
+        
+        // Update trading plan with personalized values
+        updateTradingPlan();
+        
+        // Update trade counter display and progress bar
+        updateTradeCounter();
+        updateProgressBar();
+        
+        // Save session to localStorage
+        saveTradingSession();
+    }
+
+    function updateTradingPlan() {
+        // Get current values
+        const riskReward = parseFloat(document.getElementById('risk-reward').value) || 0;
+        const tradesNeeded = parseInt(document.getElementById('trades-needed').textContent) || 0;
+        const currentWinRate = parseFloat(document.getElementById('win-rate').value) || 0;
+        
+        // Update plan stats
+        document.getElementById('plan-reward').textContent = riskReward.toFixed(1) + 'R';
+        document.getElementById('plan-trades').textContent = tradesNeeded;
+        
+        // Update entry rules
+        document.getElementById('plan-tp').textContent = riskReward.toFixed(1);
+        
+        // Update win rate projection
+        document.getElementById('current-win-rate').textContent = currentWinRate + '%';
+        
+        // Calculate projected win rate (current win rate + improvement from following plan)
+        const improvement = Math.min(30, (100 - currentWinRate) * 0.4); // Max 30% improvement
+        const projectedWinRate = Math.min(85, currentWinRate + improvement);
+        document.getElementById('projected-win-rate').textContent = Math.round(projectedWinRate) + '%';
+    }
+
+    function updateProgressBar() {
+        const progressPercent = Math.min(100, (tradingSession.currentProfit / tradingSession.goalProfit) * 100);
+        document.getElementById('progress-percent').textContent = `${Math.max(0, progressPercent).toFixed(1)}%`;
+        document.getElementById('progress-fill').style.width = `${Math.max(0, progressPercent)}%`;
+    }
+
+    function logTrade(result) {
+        if (tradingSession.remainingTrades <= 0) return;
+        
+        if (result === 'win') {
+            tradingSession.wins++;
+            tradingSession.currentProfit += tradingSession.rewardPerTrade;
+            tradingSession.consecutiveLosses = 0; // Reset consecutive losses
+            tradingSession.lastTradeResult = 'win';
+        } else {
+            tradingSession.losses++;
+            tradingSession.currentProfit -= tradingSession.riskPerTrade;
+            tradingSession.consecutiveLosses++; // Increment consecutive losses
+            tradingSession.lastTradeResult = 'loss';
+        }
+        
+        tradingSession.totalTrades++;
+        tradingSession.remainingTrades--;
+        
+        // Update trade counter display and progress bar
+        updateTradeCounter();
+        updateProgressBar();
+        
+        // Save session to localStorage
+        saveTradingSession();
+    }
+
+    function resetTrades() {
+        tradingSession.totalTrades = 0;
+        tradingSession.wins = 0;
+        tradingSession.losses = 0;
+        tradingSession.currentProfit = 0;
+        tradingSession.consecutiveLosses = 0;
+        tradingSession.lastTradeResult = null;
+        
+        // Reset remaining trades based on current goal calculation
+        const tradesNeeded = parseInt(document.getElementById('trades-needed').textContent);
+        tradingSession.remainingTrades = tradesNeeded;
+        
+        // Update trade counter display and progress bar
+        updateTradeCounter();
+        updateProgressBar();
+        
+        // Save session to localStorage
+        saveTradingSession();
+    }
+
+    function updateTradeCounter() {
+        document.getElementById('remaining-trades').textContent = tradingSession.remainingTrades;
+        document.getElementById('completed-wins').textContent = tradingSession.wins;
+        document.getElementById('needed-wins').textContent = tradingSession.neededWins;
+        document.getElementById('completed-losses').textContent = tradingSession.losses;
+        document.getElementById('current-profit').textContent = `$${tradingSession.currentProfit.toFixed(2)}`;
+        
+        const messageElement = document.getElementById('counter-message');
+        
+        if (tradingSession.remainingTrades <= 0) {
+            if (tradingSession.currentProfit >= tradingSession.goalProfit) {
+                messageElement.textContent = "🎉 Goal Achieved! Perfect execution - Stop trading for today";
+                messageElement.className = "counter-success";
+            } else {
+                messageElement.textContent = "⏸️ 8 trades completed - Reset for new session";
+                messageElement.className = "counter-warning";
+            }
+        } else if (tradingSession.consecutiveLosses >= 2) {
+            messageElement.textContent = "⚠️ 2+ consecutive losses - Take a 30min break then continue";
+            messageElement.className = "counter-warning";
+        } else if (tradingSession.wins >= tradingSession.neededWins) {
+            messageElement.textContent = "✅ Target wins reached! You can stop or continue carefully";
+            messageElement.className = "counter-success";
+        } else {
+            const neededWins = tradingSession.neededWins - tradingSession.wins;
+            messageElement.textContent = `Need ${neededWins} more win(s) - ${tradingSession.remainingTrades} trades remaining`;
+            messageElement.className = "counter-info";
+        }
+    }
+
+    function saveTradingSession() {
+        localStorage.setItem('tradingSession', JSON.stringify(tradingSession));
+    }
+
+    function loadTradingSession() {
+        const savedSession = localStorage.getItem('tradingSession');
+        if (savedSession) {
+            tradingSession = JSON.parse(savedSession);
+            updateTradeCounter();
+            updateProgressBar();
+        }
+    }
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickTrade Strategy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-dark: #3a0ca3;
+            --secondary: #7209b7;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --danger: #e63946;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --border: #dee2e6;
+            --card-bg: #ffffff;
+            --body-bg: #f5f7ff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            --transition: all 0.3s ease;
+            --input-bg: white;
+            --input-border: var(--border);
+        }
+
+        .dark-mode {
+            --primary: #4cc9f0;
+            --primary-light: #4895ef;
+            --primary-dark: #4361ee;
+            --secondary: #7209b7;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --danger: #e63946;
+            --light: #343a40;
+            --dark: #f8f9fa;
+            --gray: #adb5bd;
+            --light-gray: #495057;
+            --border: #495057;
+            --card-bg: #212529;
+            --body-bg: #121212;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            --input-bg: #343a40;
+            --input-border: #495057;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        body {
+            background: var(--body-bg);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            font-size: 16px;
+            transition: var(--transition);
+            padding: 8px;
+        }
+        
+        .calculator-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 0;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            margin: 0 auto;
+            padding: 0;
+        }
+        
+        .calculator-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        
+        .calculator-title {
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            transition: var(--transition);
+        }
+        
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .calculator-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px 15px;
+            padding-bottom: 20px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .section-title i {
+            color: var(--primary);
+        }
+        
+        .input-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+        
+        .input-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        @media (min-width: 400px) {
+             .two-column-layout {
+                 grid-template-columns: 1fr 1fr;
+             }
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .form-input, .form-select {
+            background: var(--input-bg);
+            color: var(--dark);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 16px;
+            width: 100%;
+            transition: var(--transition);
+            appearance: none;
+        }
+        
+        .input-with-unit {
+            display: flex;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+            background: var(--input-bg);
+        }
+        
+        .input-with-unit input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 12px;
+            font-size: 16px;
+            color: var(--dark);
+            width: 100%;
+        }
+        
+        .input-with-unit .unit {
+            background: var(--light-gray);
+            padding: 10px 12px;
+            font-size: 15px;
+            color: var(--dark);
+            border-left: 1px solid var(--input-border);
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            min-width: 60px;
+            justify-content: center;
+        }
+        
+        .dark-mode .input-with-unit .unit {
+            background: var(--light);
+            color: var(--dark);
+        }
+
+        /* Results Display */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 400px) {
+             .results-grid {
+                 grid-template-columns: 1fr 1fr;
+             }
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .result-value.profit { color: var(--success); }
+        .result-value.loss { color: var(--danger); }
+        .result-value.risk-reward { color: var(--primary); }
+        .result-value.size { color: var(--secondary); }
+
+        .dashboard-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .dashboard-label {
+            color: var(--gray);
+            font-weight: 500;
+            font-size: 15px;
+        }
+        
+        .dashboard-value {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 16px;
+        }
+        
+        .positive {
+            color: var(--success);
+        }
+        
+        .negative {
+            color: var(--danger);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: var(--light-gray);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Trade Counter */
+        .trade-counter {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .counter-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .counter-title i {
+            color: var(--primary);
+        }
+        
+        .counter-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        @media (min-width: 400px) {
+             .counter-grid {
+                 grid-template-columns: 1fr 1fr;
+             }
+        }
+
+        .counter-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        .counter-value {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+        
+        .counter-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+        
+        .counter-warning {
+            color: var(--warning);
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(247, 37, 133, 0.1);
+            border-radius: 6px;
+        }
+        
+        .counter-success {
+            color: var(--success);
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(76, 201, 240, 0.1);
+            border-radius: 6px;
+        }
+        
+        .counter-info {
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 6px;
+        }
+
+        /* Trade Action Buttons */
+        .trade-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .trade-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .win-btn {
+            background: var(--success);
+            color: white;
+        }
+        
+        .loss-btn {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .reset-btn {
+            background: var(--warning);
+            color: white;
+        }
+        
+        /* Improved Trading Plan Section */
+        .trading-plan-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .trading-plan-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .plan-summary {
+            margin-bottom: 20px;
+        }
+
+        .plan-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .plan-stat {
+            text-align: center;
+            padding: 12px 5px;
+            background: var(--light-gray);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 3px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+            font-weight: 600;
+        }
+
+        .plan-focus {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .focus-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--dark);
+            padding: 8px 12px;
+            background: var(--light-gray);
+            border-radius: 8px;
+        }
+
+        .focus-item i {
+            color: var(--primary);
+            width: 16px;
+        }
+
+        .plan-rules {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .rule-category {
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rule-category:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .rule-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rule-title:before {
+            content: "";
+            display: block;
+            width: 4px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .rule-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rule-list li {
+            position: relative;
+            padding: 8px 0 8px 20px;
+            font-size: 14px;
+            color: var(--dark);
+            line-height: 1.4;
+        }
+
+        .rule-list li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .success-metric {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: var(--light-gray);
+        }
+
+        .metric-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .metric-value.high {
+            background: var(--success);
+        }
+
+        .metric-value.medium {
+            background: var(--primary);
+        }
+
+        .metric-value.low {
+            background: var(--warning);
+        }
+
+        .win-rate-projection {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .projection-label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .projection-value {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .projection-note {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        /* Utility */
+        .hidden { display: none !important; }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        /* Responsive breakpoint for mobile devices */
+        @media (max-width: 480px) {
+            .calculator-container {
+                height: 100vh;
+                max-height: 100vh;
+            }
+            
+            body {
+                padding: 0;
+            }
+            
+            .calculator-header {
+                padding: 15px 10px;
+            }
+            
+            .calculator-title {
+                font-size: 18px;
+            }
+            
+            .calculator-content {
+                padding: 15px 10px;
+            }
+            
+            .section-title {
+                font-size: 16px;
+            }
+            
+            .input-card {
+                padding: 15px;
+            }
+            
+            .result-value {
+                font-size: 24px;
+            }
+            
+            .trading-plan-section {
+                padding: 15px;
+            }
+            
+            .trade-counter {
+                padding: 15px;
+            }
+            
+            .counter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .trade-actions {
+                flex-direction: column;
+            }
+            
+            .plan-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-container">
+    <header class="calculator-header">
+        <h1 class="calculator-title">
+            <i class="fas fa-chart-line"></i>
+            QuickTrade Strategy
+        </h1>
+        <div class="header-actions">
+            <button class="header-btn" id="darkModeToggle" aria-label="Toggle Dark Mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="calculator-content">
+        <!-- Strategy Tab -->
+        <div class="section">
+            <h2 class="section-title"><i class="fas fa-wallet"></i> Account Setup</h2>
+            <div class="input-card">
+                <div class="form-group">
+                    <label for="account-capital" class="form-label"><i class="fas fa-piggy-bank"></i> Account Capital</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="account-capital" class="form-input" value="1200" min="0" step="100">
+                        <span class="unit">USD</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="risk-percentage" class="form-label"><i class="fas fa-exclamation-triangle"></i> Risk Per Trade (%)</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="risk-percentage" class="form-input" value="3" min="0.1" max="10" step="0.1">
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="goal-profit" class="form-label"><i class="fas fa-trophy"></i> Goal Profit</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="goal-profit" class="form-input" value="144" min="0" step="100">
+                        <span class="unit">USD</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title"><i class="fas fa-cogs"></i> Trading Strategy</h2>
+            <div class="input-card">
+                <div class="two-column-layout">
+                    <div class="form-group">
+                        <label for="win-rate" class="form-label"><i class="fas fa-chart-line"></i> Win Rate (%)</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="win-rate" class="form-input" value="37.5" min="1" max="99" step="1">
+                            <span class="unit">%</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="risk-reward" class="form-label"><i class="fas fa-balance-scale"></i> Risk:Reward Ratio</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="risk-reward" class="form-input" value="3" min="0.5" max="10" step="0.1">
+                            <span class="unit">R:R</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Expected Value Per Trade</span>
+                    <span class="dashboard-value positive" id="expected-value">$18.00</span>
+                </div>
+                
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Risk Per Trade</span>
+                    <span class="dashboard-value" id="risk-per-trade">$36.00</span>
+                </div>
+                
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Reward Per Trade</span>
+                    <span class="dashboard-value positive" id="reward-per-trade">$108.00</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section" id="results-section">
+            <h2 class="section-title"><i class="fas fa-chart-area"></i> Goal Analysis</h2>
+            
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-title">Trades Needed</div>
+                    <div class="result-value" id="trades-needed">8</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">Winning Trades</div>
+                    <div class="result-value profit" id="winning-trades">3</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">Losing Trades</div>
+                    <div class="result-value loss" id="losing-trades">5</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">Time (Days)</div>
+                    <div class="result-value size" id="time-days">1</div>
+                </div>
+            </div>
+
+            <div class="input-card" style="margin-top: 15px;">
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Total Risk Capital</span>
+                    <span class="dashboard-value" id="total-risk">$180.00</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Account After Goal</span>
+                    <span class="dashboard-value positive" id="account-after-goal">$1,344.00</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Daily Profit</span>
+                    <span class="dashboard-value positive" id="daily-profit">$144.00</span>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Goal Progress</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- Trade Counter Section - Moved below progress bar -->
+            <div class="trade-counter" id="trade-counter">
+                <h2 class="counter-title"><i class="fas fa-tachometer-alt"></i> Live Trade Counter</h2>
+                
+                <div class="counter-grid">
+                    <div class="counter-item">
+                        <div class="counter-value" id="remaining-trades">8</div>
+                        <div class="counter-label">Trades Remaining</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-value"><span id="completed-wins">0</span>/<span id="needed-wins">3</span></div>
+                        <div class="counter-label">Winning Trades</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-value" id="completed-losses">0</div>
+                        <div class="counter-label">Losing Trades</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-value" id="current-profit">$0.00</div>
+                        <div class="counter-label">Current Profit</div>
+                    </div>
+                </div>
+                
+                <div id="counter-message" class="counter-info">
+                    Start trading to reach your goal of $144
+                </div>
+                
+                <div class="trade-actions">
+                    <button class="trade-btn win-btn" onclick="logTrade('win')">
+                        <i class="fas fa-check-circle"></i> Log Win
+                    </button>
+                    <button class="trade-btn loss-btn" onclick="logTrade('loss')">
+                        <i class="fas fa-times-circle"></i> Log Loss
+                    </button>
+                    <button class="trade-btn reset-btn" onclick="resetTrades()">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trading Plan Section -->
+        <div class="trading-plan-section" id="trading-plan">
+            <h2 class="trading-plan-title"><i class="fas fa-chess-knight"></i> Trading Plan</h2>
+            
+            <div class="plan-summary">
+                <div class="plan-stats">
+                    <div class="plan-stat">
+                        <div class="stat-value" id="plan-reward">3R</div>
+                        <div class="stat-label">Reward</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="stat-value">1R</div>
+                        <div class="stat-label">Stop</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="stat-value" id="plan-trades">8</div>
+                        <div class="stat-label">Max Trades</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="stat-value">9:30-11</div>
+                        <div class="stat-label">Trading Hours</div>
+                    </div>
+                </div>
+                
+                <div class="plan-focus">
+                    <div class="focus-item">
+                        <i class="fas fa-star"></i>
+                        <span>Focus: High Volatility (ADBE, NVDA, TSLA)</span>
+                    </div>
+                    <div class="focus-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Strategy: Breakout + Pullback</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="plan-rules">
+                <div class="rule-category">
+                    <h3 class="rule-title">Success Metrics</h3>
+                    
+                    <div class="success-metric">
+                        <span class="metric-label">Resistance Break + Pullback</span>
+                        <span class="metric-value high">92% Win Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Best Entry Timing (10:00 AM)</span>
+                        <span class="metric-value high">76% Win Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Optimal Trade Duration (18-20 min)</span>
+                        <span class="metric-value high">71% Win Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Optimal Contract Size (3-5)</span>
+                        <span class="metric-value high">85% Max PnL</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Long Bias Strategy</span>
+                        <span class="metric-value medium">67% Win Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Support Breakout Strategy</span>
+                        <span class="metric-value medium">82% Win Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">Stop Loss Efficiency</span>
+                        <span class="metric-value medium">55% Hit Rate</span>
+                    </div>
+                    <div class="success-metric">
+                        <span class="metric-label">FOMO Entry (Avoid)</span>
                         <span class="metric-value low">23% Win Rate</span>
                     </div>
                 </div>
