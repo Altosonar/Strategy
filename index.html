@@ -319,34 +319,10 @@
             color: var(--danger);
         }
 
-        .action-button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            width: 100%;
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .action-button:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
         /* Progress Bar */
         .progress-container {
             margin-top: 20px;
+            margin-bottom: 20px;
         }
         
         .progress-label {
@@ -475,43 +451,61 @@
             background: var(--card-bg);
             border-radius: 12px;
             padding: 18px;
-            margin-top: 20px;
+            margin-bottom: 25px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
-            text-align: center;
         }
         
         .counter-title {
             font-size: 18px;
             font-weight: 700;
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             color: var(--dark);
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .counter-title i {
+            color: var(--primary);
         }
         
         .counter-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 15px;
             margin-bottom: 15px;
         }
-        
+
+        @media (min-width: 400px) {
+             .counter-grid {
+                 grid-template-columns: 1fr 1fr;
+             }
+        }
+
         .counter-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
             text-align: center;
         }
         
         .counter-value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 800;
             margin-bottom: 5px;
+            color: var(--dark);
         }
         
         .counter-label {
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 600;
             color: var(--gray);
+            text-transform: uppercase;
         }
         
         .counter-warning {
@@ -519,6 +513,9 @@
             font-weight: 600;
             margin-top: 10px;
             font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(247, 37, 133, 0.1);
+            border-radius: 6px;
         }
         
         .counter-success {
@@ -526,6 +523,19 @@
             font-weight: 600;
             margin-top: 10px;
             font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(76, 201, 240, 0.1);
+            border-radius: 6px;
+        }
+        
+        .counter-info {
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 6px;
         }
 
         /* Trade Action Buttons */
@@ -616,6 +626,10 @@
             
             .counter-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .trade-actions {
+                flex-direction: column;
             }
         }
     </style>
@@ -744,55 +758,51 @@
             <div class="progress-container">
                 <div class="progress-label">
                     <span>Goal Progress</span>
-                    <span id="progress-percent">89.3%</span>
+                    <span id="progress-percent">0%</span>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill" style="width: 89.3%"></div>
-                </div>
-            </div>
-        </div>
-        
-        <button class="action-button" onclick="calculateGoal()">
-            <i class="fas fa-calculator"></i> Calculate Trading Plan
-        </button>
-        
-        <!-- Trade Counter Section -->
-        <div class="trade-counter" id="trade-counter" style="display: none;">
-            <h2 class="counter-title"><i class="fas fa-tachometer-alt"></i> Live Trade Counter</h2>
-            
-            <div class="counter-grid">
-                <div class="counter-item">
-                    <div class="counter-value" id="remaining-trades">8</div>
-                    <div class="counter-label">Trades Remaining</div>
-                </div>
-                <div class="counter-item">
-                    <div class="counter-value"><span id="completed-wins">0</span>/<span id="needed-wins">3</span></div>
-                    <div class="counter-label">Winning Trades</div>
-                </div>
-                <div class="counter-item">
-                    <div class="counter-value" id="completed-losses">0</div>
-                    <div class="counter-label">Losing Trades</div>
-                </div>
-                <div class="counter-item">
-                    <div class="counter-value" id="current-profit">$0</div>
-                    <div class="counter-label">Current Profit</div>
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
                 </div>
             </div>
             
-            <div id="counter-message" class="counter-success">
-                Start trading to reach your goal of $144
-            </div>
-            
-            <div class="trade-actions">
-                <button class="trade-btn win-btn" onclick="logTrade('win')">
-                    <i class="fas fa-check-circle"></i> Log Win
-                </button>
-                <button class="trade-btn loss-btn" onclick="logTrade('loss')">
-                    <i class="fas fa-times-circle"></i> Log Loss
-                </button>
-                <button class="trade-btn reset-btn" onclick="resetTrades()">
-                    <i class="fas fa-redo"></i> Reset
-                </button>
+            <!-- Trade Counter Section - Moved below progress bar -->
+            <div class="trade-counter" id="trade-counter">
+                <h2 class="counter-title"><i class="fas fa-tachometer-alt"></i> Live Trade Counter</h2>
+                
+                <div class="counter-grid">
+                    <div class="counter-item">
+                        <div class="counter-value" id="remaining-trades">8</div>
+                        <div class="counter-label">Trades Remaining</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-value"><span id="completed-wins">0</span>/<span id="needed-wins">3</span></div>
+                        <div class="counter-label">Winning Trades</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-value" id="completed-losses">0</div>
+                        <div class="counter-label">Losing Trades</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-value" id="current-profit">$0.00</div>
+                        <div class="counter-label">Current Profit</div>
+                    </div>
+                </div>
+                
+                <div id="counter-message" class="counter-info">
+                    Start trading to reach your goal of $144
+                </div>
+                
+                <div class="trade-actions">
+                    <button class="trade-btn win-btn" onclick="logTrade('win')">
+                        <i class="fas fa-check-circle"></i> Log Win
+                    </button>
+                    <button class="trade-btn loss-btn" onclick="logTrade('loss')">
+                        <i class="fas fa-times-circle"></i> Log Loss
+                    </button>
+                    <button class="trade-btn reset-btn" onclick="resetTrades()">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -866,14 +876,15 @@
             </div>
             
             <div class="strategy-point">
-                <div class="strategy-point-title">6. STOP TRADING AFTER 2 LOSSES OR 3 TRADES</div>
+                <div class="strategy-point-title">6. STOP TRADING AFTER 2 CONSECUTIVE LOSSES OR 8 TOTAL TRADES</div>
                 <div class="strategy-point-description">
-                    Maximum 3 trades per session. FOMO is your most costly error ($420).
+                    Maximum 8 trades per session. FOMO is your most costly error ($420).
+                    <strong>Mathematical Plan:</strong> 3 wins & 5 losses = $144 profit.
                     <div class="adaptive-action win-action">
-                        <strong>After Win:</strong> Allow 4th trade if 3 wins
+                        <strong>After Win:</strong> Continue trading - need 3 total wins
                     </div>
                     <div class="adaptive-action loss-action">
-                        <strong>After Loss:</strong> Stop trading after 2 losses
+                        <strong>After Loss:</strong> Stop if 2 consecutive losses, resume after break
                     </div>
                 </div>
             </div>
@@ -892,7 +903,9 @@
         goalProfit: 0,
         rewardPerTrade: 0,
         riskPerTrade: 0,
-        neededWins: 0
+        neededWins: 0,
+        lastTradeResult: null, // Track consecutive losses
+        consecutiveLosses: 0
     };
 
     // Initialize the calculator when the page loads
@@ -1033,11 +1046,6 @@
         document.getElementById('account-after-goal').textContent = `$${accountAfterGoal.toFixed(2)}`;
         document.getElementById('daily-profit').textContent = `$${dailyProfit.toFixed(2)}`;
         
-        // Update progress bar
-        const progressPercent = Math.min(100, (accountCapital / (accountCapital + goalProfit)) * 100);
-        document.getElementById('progress-percent').textContent = `${progressPercent.toFixed(1)}%`;
-        document.getElementById('progress-fill').style.width = `${progressPercent}%`;
-        
         // Update trading session with new values
         tradingSession.remainingTrades = tradesNeeded;
         tradingSession.goalProfit = goalProfit;
@@ -1049,11 +1057,17 @@
         document.getElementById('adaptive-strategy').style.display = 'block';
         document.getElementById('trade-counter').style.display = 'block';
         
-        // Update trade counter display
+        // Update trade counter display and progress bar
         updateTradeCounter();
         
         // Save session to localStorage
         saveTradingSession();
+    }
+
+    function updateProgressBar() {
+        const progressPercent = Math.min(100, (tradingSession.currentProfit / tradingSession.goalProfit) * 100);
+        document.getElementById('progress-percent').textContent = `${Math.max(0, progressPercent).toFixed(1)}%`;
+        document.getElementById('progress-fill').style.width = `${Math.max(0, progressPercent)}%`;
     }
 
     function logTrade(result) {
@@ -1061,17 +1075,23 @@
         
         if (result === 'win') {
             tradingSession.wins++;
+            // FIXED: Use the actual reward per trade for wins, not goal-based calculation
             tradingSession.currentProfit += tradingSession.rewardPerTrade;
+            tradingSession.consecutiveLosses = 0; // Reset consecutive losses
+            tradingSession.lastTradeResult = 'win';
         } else {
             tradingSession.losses++;
             tradingSession.currentProfit -= tradingSession.riskPerTrade;
+            tradingSession.consecutiveLosses++; // Increment consecutive losses
+            tradingSession.lastTradeResult = 'loss';
         }
         
         tradingSession.totalTrades++;
         tradingSession.remainingTrades--;
         
-        // Update trade counter display
+        // Update trade counter display and progress bar
         updateTradeCounter();
+        updateProgressBar();
         
         // Save session to localStorage
         saveTradingSession();
@@ -1082,13 +1102,16 @@
         tradingSession.wins = 0;
         tradingSession.losses = 0;
         tradingSession.currentProfit = 0;
+        tradingSession.consecutiveLosses = 0;
+        tradingSession.lastTradeResult = null;
         
         // Reset remaining trades based on current goal calculation
         const tradesNeeded = parseInt(document.getElementById('trades-needed').textContent);
         tradingSession.remainingTrades = tradesNeeded;
         
-        // Update trade counter display
+        // Update trade counter display and progress bar
         updateTradeCounter();
+        updateProgressBar();
         
         // Save session to localStorage
         saveTradingSession();
@@ -1105,22 +1128,22 @@
         
         if (tradingSession.remainingTrades <= 0) {
             if (tradingSession.currentProfit >= tradingSession.goalProfit) {
-                messageElement.textContent = "🎉 Goal Achieved! Stop trading for today.";
+                messageElement.textContent = "🎉 Goal Achieved! Perfect execution - Stop trading for today";
                 messageElement.className = "counter-success";
             } else {
-                messageElement.textContent = "⏸️ Trading session complete. Reset to start again.";
+                messageElement.textContent = "⏸️ 8 trades completed - Reset for new session";
                 messageElement.className = "counter-warning";
             }
-        } else if (tradingSession.losses >= 2) {
-            messageElement.textContent = "⚠️ Stop trading - 2 losses reached for today";
+        } else if (tradingSession.consecutiveLosses >= 2) {
+            messageElement.textContent = "⚠️ 2+ consecutive losses - Take a 30min break then continue";
             messageElement.className = "counter-warning";
         } else if (tradingSession.wins >= tradingSession.neededWins) {
-            messageElement.textContent = "✅ Target wins reached! Consider stopping or continue carefully.";
+            messageElement.textContent = "✅ Target wins reached! You can stop or continue carefully";
             messageElement.className = "counter-success";
         } else {
             const neededWins = tradingSession.neededWins - tradingSession.wins;
-            messageElement.textContent = `Need ${neededWins} more win(s) to reach goal`;
-            messageElement.className = "counter-success";
+            messageElement.textContent = `Need ${neededWins} more win(s) - ${tradingSession.remainingTrades} trades remaining`;
+            messageElement.className = "counter-info";
         }
     }
 
@@ -1133,6 +1156,7 @@
         if (savedSession) {
             tradingSession = JSON.parse(savedSession);
             updateTradeCounter();
+            updateProgressBar();
         }
     }
 </script>
