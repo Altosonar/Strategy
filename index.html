@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strategy</title>
+    <title>QuickTrade Strategy</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -345,107 +345,6 @@
             transition: width 0.5s ease;
         }
         
-        /* Strategy Section */
-        .strategy-section {
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        
-        .strategy-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .strategy-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .strategy-stat {
-            text-align: center;
-        }
-        
-        .strategy-stat-value {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 5px;
-        }
-        
-        .strategy-stat-label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .strategy-explanation {
-            font-size: 14px;
-            text-align: center;
-            margin-top: 10px;
-            opacity: 0.9;
-        }
-
-        /* Adaptive Strategy Section */
-        .adaptive-strategy-section {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 18px;
-            margin-top: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            display: none;
-        }
-        
-        .adaptive-strategy-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .strategy-point {
-            margin-bottom: 20px;
-        }
-        
-        .strategy-point-title {
-            font-weight: 700;
-            color: var(--dark);
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
-        
-        .strategy-point-description {
-            color: var(--dark);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .adaptive-action {
-            margin-top: 8px;
-            padding: 8px 12px;
-            background: var(--light-gray);
-            border-radius: 6px;
-            font-size: 13px;
-        }
-        
-        .win-action {
-            border-left: 4px solid var(--success);
-        }
-        
-        .loss-action {
-            border-left: 4px solid var(--danger);
-        }
-
         /* Trade Counter */
         .trade-counter {
             background: var(--card-bg);
@@ -575,6 +474,203 @@
             color: white;
         }
         
+        /* Improved Trading Plan Section */
+        .trading-plan-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .trading-plan-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .plan-summary {
+            margin-bottom: 20px;
+        }
+
+        .plan-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .plan-stat {
+            text-align: center;
+            padding: 12px 5px;
+            background: var(--light-gray);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 3px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+            font-weight: 600;
+        }
+
+        .plan-focus {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .focus-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--dark);
+            padding: 8px 12px;
+            background: var(--light-gray);
+            border-radius: 8px;
+        }
+
+        .focus-item i {
+            color: var(--primary);
+            width: 16px;
+        }
+
+        .plan-rules {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .rule-category {
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rule-category:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .rule-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rule-title:before {
+            content: "";
+            display: block;
+            width: 4px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .rule-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rule-list li {
+            position: relative;
+            padding: 8px 0 8px 20px;
+            font-size: 14px;
+            color: var(--dark);
+            line-height: 1.4;
+        }
+
+        .rule-list li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .success-metric {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: var(--light-gray);
+        }
+
+        .metric-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--success);
+            color: white;
+        }
+
+        .metric-value.high {
+            background: var(--success);
+        }
+
+        .metric-value.medium {
+            background: var(--primary);
+        }
+
+        .metric-value.low {
+            background: var(--warning);
+        }
+
+        .win-rate-projection {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .projection-label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .projection-value {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .projection-note {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
         /* Utility */
         .hidden { display: none !important; }
         input[type="number"]::-webkit-outer-spin-button,
@@ -616,7 +712,7 @@
                 font-size: 24px;
             }
             
-            .adaptive-strategy-section {
+            .trading-plan-section {
                 padding: 15px;
             }
             
@@ -630,6 +726,10 @@
             
             .trade-actions {
                 flex-direction: column;
+            }
+            
+            .plan-stats {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -806,86 +906,80 @@
             </div>
         </div>
         
-        <!-- Adaptive Strategy Section -->
-        <div class="adaptive-strategy-section" id="adaptive-strategy">
-            <h2 class="adaptive-strategy-title"><i class="fas fa-chess-knight"></i> Adaptive Trading Strategy</h2>
+        <!-- Trading Plan Section -->
+        <div class="trading-plan-section" id="trading-plan">
+            <h2 class="trading-plan-title"><i class="fas fa-chess-knight"></i> Trading Plan</h2>
             
-            <div class="strategy-point">
-                <div class="strategy-point-title">1. EXECUTE RESISTANCE BREAK PULLBACK STRATEGY</div>
-                <div class="strategy-point-description">
-                    Enter when price breaks resistance then pulls back 2.4 points. Take profit at 3.4R, stop loss at 1R.
-                    <div class="adaptive-action win-action">
-                        <strong>After Win:</strong> Increase trade size by 15%
+            <div class="plan-summary">
+                <div class="plan-stats">
+                    <div class="plan-stat">
+                        <div class="stat-value" id="plan-reward">3R</div>
+                        <div class="stat-label">Reward</div>
                     </div>
-                    <div class="adaptive-action loss-action">
-                        <strong>After Loss:</strong> Switch to Support Bounce for 3 trades
+                    <div class="plan-stat">
+                        <div class="stat-value">1R</div>
+                        <div class="stat-label">Stop</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="stat-value" id="plan-trades">8</div>
+                        <div class="stat-label">Max Trades</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="stat-value">9:30-11</div>
+                        <div class="stat-label">Trading Hours</div>
+                    </div>
+                </div>
+                
+                <div class="plan-focus">
+                    <div class="focus-item">
+                        <i class="fas fa-star"></i>
+                        <span>Focus: High Volatility (ADBE, NVDA, TSLA)</span>
+                    </div>
+                    <div class="focus-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Strategy: Breakout + Pullback</span>
                     </div>
                 </div>
             </div>
             
-            <div class="strategy-point">
-                <div class="strategy-point-title">2. TRADE ONLY 9:30-11:00 AM NY TIME</div>
-                <div class="strategy-point-description">
-                    Highest probability at 10:00 AM during London-NY overlap.
-                    <div class="adaptive-action win-action">
-                        <strong>After Win:</strong> Maintain current timing
+            <div class="plan-rules">
+                <div class="rule-category">
+                    <h3 class="rule-title">Success Metrics</h3>
+                    
+                    <div class="success-metric">
+                        <span class="metric-label">Breakout + Pullback Entry</span>
+                        <span class="metric-value high">78% Win Rate</span>
                     </div>
-                    <div class="adaptive-action loss-action">
-                        <strong>After Loss:</strong> Shift to 10:30 AM start next day
+                    <div class="success-metric">
+                        <span class="metric-label">Resistance Break Entry</span>
+                        <span class="metric-value medium">65% Win Rate</span>
                     </div>
-                </div>
-            </div>
-            
-            <div class="strategy-point">
-                <div class="strategy-point-title">3. FOCUS ON ADBE AND HIGH VOLATILITY SYMBOLS</div>
-                <div class="strategy-point-description">
-                    Trade ADBE (71% win rate). Focus on symbols with high volatility match (87%).
-                    <div class="adaptive-action win-action">
-                        <strong>After Win:</strong> Continue ADBE +10% size
+                    <div class="success-metric">
+                        <span class="metric-label">Support Bounce Entry</span>
+                        <span class="metric-value medium">62% Win Rate</span>
                     </div>
-                    <div class="adaptive-action loss-action">
-                        <strong>After Loss:</strong> Rotate to secondary symbols for 2 trades
+                    <div class="success-metric">
+                        <span class="metric-label">FOMO Entry</span>
+                        <span class="metric-value low">23% Win Rate</span>
                     </div>
                 </div>
-            </div>
-            
-            <div class="strategy-point">
-                <div class="strategy-point-title">4. HOLD TRADES 15-25 MINUTES MAXIMUM</div>
-                <div class="strategy-point-description">
-                    Optimal duration 17.7 minutes. Avoid holding positions beyond 25 minutes.
-                    <div class="adaptive-action win-action">
-                        <strong>After Win:</strong> Maintain duration
-                    </div>
-                    <div class="adaptive-action loss-action">
-                        <strong>After Loss:</strong> Reduce to 20 minutes max for 3 trades
-                    </div>
+                
+                <div class="rule-category">
+                    <h3 class="rule-title">Critical Rules</h3>
+                    <ul class="rule-list">
+                        <li>Enter on resistance break + pullback</li>
+                        <li>TP at <span id="plan-tp">3</span>R, SL at 1R</li>
+                        <li>Max 3 trades per session</li>
+                        <li>Stop after 2 consecutive losses</li>
+                        <li>Trade only 9:30-11 AM EST</li>
+                    </ul>
                 </div>
-            </div>
-            
-            <div class="strategy-point">
-                <div class="strategy-point-title">5. USE 2.4 POINT DYNAMIC STOP LOSS</div>
-                <div class="strategy-point-description">
-                    Stop 2.4 points from entry, trail at 72% efficiency.
-                    <div class="adaptive-action win-action">
-                        <strong>After Win:</strong> Risk 3.5%
-                    </div>
-                    <div class="adaptive-action loss-action">
-                        <strong>After Loss:</strong> Risk 2% until 2 consecutive wins
-                    </div>
-                </div>
-            </div>
-            
-            <div class="strategy-point">
-                <div class="strategy-point-title">6. STOP TRADING AFTER 2 CONSECUTIVE LOSSES OR 8 TOTAL TRADES</div>
-                <div class="strategy-point-description">
-                    Maximum 8 trades per session. FOMO is your most costly error ($420).
-                    <strong>Mathematical Plan:</strong> 3 wins & 5 losses = $144 profit.
-                    <div class="adaptive-action win-action">
-                        <strong>After Win:</strong> Continue trading - need 3 total wins
-                    </div>
-                    <div class="adaptive-action loss-action">
-                        <strong>After Loss:</strong> Stop if 2 consecutive losses, resume after break
-                    </div>
+                
+                <!-- Win Rate Projection -->
+                <div class="win-rate-projection">
+                    <div class="projection-label">Projected Win Rate Following Plan</div>
+                    <div class="projection-value" id="projected-win-rate">67%</div>
+                    <div class="projection-note">vs. your current <span id="current-win-rate">37.5%</span></div>
                 </div>
             </div>
         </div>
@@ -1053,15 +1147,37 @@
         tradingSession.riskPerTrade = riskPerTrade;
         tradingSession.neededWins = winningTrades;
         
-        // Show adaptive strategy section and trade counter
-        document.getElementById('adaptive-strategy').style.display = 'block';
-        document.getElementById('trade-counter').style.display = 'block';
+        // Update trading plan with personalized values
+        updateTradingPlan();
         
         // Update trade counter display and progress bar
         updateTradeCounter();
+        updateProgressBar();
         
         // Save session to localStorage
         saveTradingSession();
+    }
+
+    function updateTradingPlan() {
+        // Get current values
+        const riskReward = parseFloat(document.getElementById('risk-reward').value) || 0;
+        const tradesNeeded = parseInt(document.getElementById('trades-needed').textContent) || 0;
+        const currentWinRate = parseFloat(document.getElementById('win-rate').value) || 0;
+        
+        // Update plan stats
+        document.getElementById('plan-reward').textContent = riskReward.toFixed(1) + 'R';
+        document.getElementById('plan-trades').textContent = tradesNeeded;
+        
+        // Update entry rules
+        document.getElementById('plan-tp').textContent = riskReward.toFixed(1);
+        
+        // Update win rate projection
+        document.getElementById('current-win-rate').textContent = currentWinRate + '%';
+        
+        // Calculate projected win rate (current win rate + improvement from following plan)
+        const improvement = Math.min(30, (100 - currentWinRate) * 0.4); // Max 30% improvement
+        const projectedWinRate = Math.min(85, currentWinRate + improvement);
+        document.getElementById('projected-win-rate').textContent = Math.round(projectedWinRate) + '%';
     }
 
     function updateProgressBar() {
@@ -1075,7 +1191,6 @@
         
         if (result === 'win') {
             tradingSession.wins++;
-            // FIXED: Use the actual reward per trade for wins, not goal-based calculation
             tradingSession.currentProfit += tradingSession.rewardPerTrade;
             tradingSession.consecutiveLosses = 0; // Reset consecutive losses
             tradingSession.lastTradeResult = 'win';
