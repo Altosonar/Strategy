@@ -474,8 +474,8 @@
             color: white;
         }
         
-        /* Improved Trading Plan Section */
-        .trading-plan-section {
+        /* Improved Personalized Strategy Section */
+        .personalized-strategy-section {
             background: var(--card-bg);
             border-radius: 12px;
             padding: 18px;
@@ -484,7 +484,7 @@
             border: 1px solid var(--border);
         }
 
-        .trading-plan-title {
+        .personalized-strategy-title {
             font-size: 18px;
             font-weight: 700;
             margin-bottom: 15px;
@@ -496,18 +496,18 @@
             border-bottom: 1px solid var(--border);
         }
 
-        .plan-summary {
+        .strategy-summary {
             margin-bottom: 20px;
         }
 
-        .plan-stats {
+        .strategy-stats {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
             margin-bottom: 15px;
         }
 
-        .plan-stat {
+        .strategy-stat {
             text-align: center;
             padding: 12px 5px;
             background: var(--light-gray);
@@ -528,7 +528,7 @@
             font-weight: 600;
         }
 
-        .plan-focus {
+        .strategy-focus {
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -551,7 +551,7 @@
             width: 16px;
         }
 
-        .plan-rules {
+        .strategy-rules {
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -833,7 +833,7 @@
                 font-size: 24px;
             }
             
-            .trading-plan-section {
+            .personalized-strategy-section {
                 padding: 15px;
             }
             
@@ -849,7 +849,7 @@
                 flex-direction: column;
             }
             
-            .plan-stats {
+            .strategy-stats {
                 grid-template-columns: repeat(2, 1fr);
             }
 
@@ -1031,31 +1031,31 @@
             </div>
         </div>
         
-        <!-- Trading Plan Section -->
-        <div class="trading-plan-section" id="trading-plan">
-            <h2 class="trading-plan-title"><i class="fas fa-chess-knight"></i> Trading Plan</h2>
+        <!-- Personalized Strategy Section -->
+        <div class="personalized-strategy-section" id="personalized-strategy">
+            <h2 class="personalized-strategy-title"><i class="fas fa-chess-knight"></i> Personalized Strategy</h2>
             
-            <div class="plan-summary">
-                <div class="plan-stats">
-                    <div class="plan-stat">
-                        <div class="stat-value" id="plan-reward">3R</div>
+            <div class="strategy-summary">
+                <div class="strategy-stats">
+                    <div class="strategy-stat">
+                        <div class="stat-value" id="strategy-reward">3R</div>
                         <div class="stat-label">Reward</div>
                     </div>
-                    <div class="plan-stat">
-                        <div class="stat-value" id="plan-stop">1R</div>
+                    <div class="strategy-stat">
+                        <div class="stat-value" id="strategy-stop">1R</div>
                         <div class="stat-label">Stop</div>
                     </div>
-                    <div class="plan-stat">
-                        <div class="stat-value" id="plan-trades">8</div>
+                    <div class="strategy-stat">
+                        <div class="stat-value" id="strategy-trades">8</div>
                         <div class="stat-label">Max Trades</div>
                     </div>
-                    <div class="plan-stat">
+                    <div class="strategy-stat">
                         <div class="stat-value">9:30-11</div>
                         <div class="stat-label">Trading Hours</div>
                     </div>
                 </div>
                 
-                <div class="plan-focus">
+                <div class="strategy-focus">
                     <div class="focus-item">
                         <i class="fas fa-star"></i>
                         <span>Focus: High Volatility (ADBE, NVDA, TSLA)</span>
@@ -1067,7 +1067,7 @@
                 </div>
             </div>
             
-            <div class="plan-rules">
+            <div class="strategy-rules">
                 <div class="rule-category">
                     <h3 class="rule-title">Success Metrics</h3>
                     
@@ -1124,7 +1124,7 @@
                                 <i class="fas fa-bullseye"></i>
                             </div>
                             <div class="rule-content">
-                                <div class="rule-main">TP at <span id="plan-tp">3.0</span>R, SL at 1R</div>
+                                <div class="rule-main">TP at <span id="strategy-tp">3.0</span>R, SL at 1R</div>
                                 <div class="rule-details">Strict risk management with predefined targets</div>
                                 <!-- NEW: Integrated TP/SL Display -->
                                 <div class="tp-sl-display">
@@ -1192,7 +1192,7 @@
                 
                 <!-- Win Rate Projection -->
                 <div class="win-rate-projection">
-                    <div class="projection-label">Projected Win Rate Following Plan</div>
+                    <div class="projection-label">Projected Win Rate Following Strategy</div>
                     <div class="projection-value" id="projected-win-rate">67%</div>
                     <div class="projection-note">vs. your current <span id="current-win-rate">37.5%</span></div>
                 </div>
@@ -1388,8 +1388,8 @@
         tradingSession.riskPerTrade = riskPerTrade;
         tradingSession.neededWins = winningTrades;
         
-        // Update trading plan with personalized values
-        updateTradingPlan();
+        // Update personalized strategy with personalized values
+        updatePersonalizedStrategy();
         
         // Update trade counter display and progress bar
         updateTradeCounter();
@@ -1399,18 +1399,18 @@
         saveTradingSession();
     }
 
-    function updateTradingPlan() {
+    function updatePersonalizedStrategy() {
         // Get current values
         const riskReward = parseFloat(document.getElementById('risk-reward').value) || 0;
         const tradesNeeded = parseInt(document.getElementById('trades-needed').textContent) || 0;
         const currentWinRate = parseFloat(document.getElementById('win-rate').value) || 0;
         
-        // Update plan stats
-        document.getElementById('plan-reward').textContent = riskReward.toFixed(1) + 'R';
-        document.getElementById('plan-trades').textContent = tradesNeeded;
+        // Update strategy stats
+        document.getElementById('strategy-reward').textContent = riskReward.toFixed(1) + 'R';
+        document.getElementById('strategy-trades').textContent = tradesNeeded;
         
         // Update entry rules
-        document.getElementById('plan-tp').textContent = riskReward.toFixed(1);
+        document.getElementById('strategy-tp').textContent = riskReward.toFixed(1);
         
         // Update stop loss display
         updateStopLossDisplay();
@@ -1418,7 +1418,7 @@
         // Update win rate projection
         document.getElementById('current-win-rate').textContent = currentWinRate + '%';
         
-        // Calculate projected win rate (current win rate + improvement from following plan)
+        // Calculate projected win rate (current win rate + improvement from following strategy)
         const improvement = Math.min(30, (100 - currentWinRate) * 0.4); // Max 30% improvement
         const projectedWinRate = Math.min(85, currentWinRate + improvement);
         document.getElementById('projected-win-rate').textContent = Math.round(projectedWinRate) + '%';
