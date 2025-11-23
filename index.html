@@ -459,6 +459,11 @@
             gap: 8px;
         }
         
+        .trade-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         .win-btn {
             background: var(--success);
             color: white;
@@ -1018,10 +1023,10 @@
                 </div>
                 
                 <div class="trade-actions">
-                    <button class="trade-btn win-btn" onclick="logTrade('win')">
+                    <button class="trade-btn win-btn" id="win-btn" onclick="logTrade('win')">
                         <i class="fas fa-check-circle"></i> Log Win
                     </button>
-                    <button class="trade-btn loss-btn" onclick="logTrade('loss')">
+                    <button class="trade-btn loss-btn" id="loss-btn" onclick="logTrade('loss')">
                         <i class="fas fa-times-circle"></i> Log Loss
                     </button>
                     <button class="trade-btn reset-btn" onclick="resetTrades()">
@@ -1214,7 +1219,8 @@
         riskPerTrade: 0,
         neededWins: 0,
         lastTradeResult: null, // Track consecutive losses
-        consecutiveLosses: 0
+        consecutiveLosses: 0,
+        tradingEnabled: true
     };
 
     // Initialize the calculator when the page loads
@@ -1430,8 +1436,39 @@
         document.getElementById('progress-fill').style.width = `${Math.max(0, progressPercent)}%`;
     }
 
+    function updateTradeButtons() {
+        const winBtn = document.getElementById('win-btn');
+        const lossBtn = document.getElementById('loss-btn');
+        
+        // Enable both buttons by default
+        winBtn.disabled = false;
+        lossBtn.disabled = false;
+        
+        // Disable buttons if goal achieved
+        if (tradingSession.currentProfit >= tradingSession.goalProfit) {
+            winBtn.disabled = true;
+            lossBtn.disabled = true;
+        }
+        // Disable loss button after 2 consecutive losses
+        else if (tradingSession.consecutiveLosses >= 2) {
+            lossBtn.disabled = true;
+        }
+        // Disable both buttons if no trades remaining
+        else if (tradingSession.remainingTrades <= 0) {
+            winBtn.disabled = true;
+            lossBtn.disabled = true;
+        }
+    }
+
     function logTrade(result) {
+        // Don't allow trading if goal already achieved
+        if (tradingSession.currentProfit >= tradingSession.goalProfit) return;
+        
+        // Don't allow trading if no trades remaining
         if (tradingSession.remainingTrades <= 0) return;
+        
+        // Don't allow loss if already have 2 consecutive losses
+        if (result === 'loss' && tradingSession.consecutiveLosses >= 2) return;
         
         if (result === 'win') {
             tradingSession.wins++;
@@ -1451,6 +1488,7 @@
         // Update trade counter display and progress bar
         updateTradeCounter();
         updateProgressBar();
+        updateTradeButtons();
         
         // Save session to localStorage
         saveTradingSession();
@@ -1463,6 +1501,7 @@
         tradingSession.currentProfit = 0;
         tradingSession.consecutiveLosses = 0;
         tradingSession.lastTradeResult = null;
+        tradingSession.tradingEnabled = true;
         
         // Reset remaining trades based on current goal calculation
         const tradesNeeded = parseInt(document.getElementById('trades-needed').textContent);
@@ -1471,6 +1510,7 @@
         // Update trade counter display and progress bar
         updateTradeCounter();
         updateProgressBar();
+        updateTradeButtons();
         
         // Save session to localStorage
         saveTradingSession();
@@ -1485,21 +1525,28 @@
         
         const messageElement = document.getElementById('counter-message');
         
-        if (tradingSession.remainingTrades <= 0) {
-            if (tradingSession.currentProfit >= tradingSession.goalProfit) {
-                messageElement.textContent = "🎉 Goal Achieved! Perfect execution - Stop trading for today";
-                messageElement.className = "counter-success";
-            } else {
-                messageElement.textContent = "⏸️ 8 trades completed - Reset for new session";
-                messageElement.className = "counter-warning";
-            }
-        } else if (tradingSession.consecutiveLosses >= 2) {
-            messageElement.textContent = "⚠️ 2+ consecutive losses - Take a 30min break then continue";
+        // Check for goal achievement first (highest priority)
+        if (tradingSession.currentProfit >= tradingSession.goalProfit) {
+            messageElement.textContent = "🎉 Goal Achieved! Perfect execution - Stop trading for today";
+            messageElement.className = "counter-success";
+        }
+        // Check if no trades remaining
+        else if (tradingSession.remainingTrades <= 0) {
+            messageElement.textContent = "⏸️ All trades completed - Reset for new session";
             messageElement.className = "counter-warning";
-        } else if (tradingSession.wins >= tradingSession.neededWins) {
+        }
+        // Check for consecutive losses rule
+        else if (tradingSession.consecutiveLosses >= 2) {
+            messageElement.textContent = "⚠️ Stop! 2+ consecutive losses - Take a 30min break then reset";
+            messageElement.className = "counter-warning";
+        }
+        // Check if target wins reached
+        else if (tradingSession.wins >= tradingSession.neededWins) {
             messageElement.textContent = "✅ Target wins reached! You can stop or continue carefully";
             messageElement.className = "counter-success";
-        } else {
+        }
+        // Default status
+        else {
             const neededWins = tradingSession.neededWins - tradingSession.wins;
             messageElement.textContent = `Need ${neededWins} more win(s) - ${tradingSession.remainingTrades} trades remaining`;
             messageElement.className = "counter-info";
@@ -1516,6 +1563,7 @@
             tradingSession = JSON.parse(savedSession);
             updateTradeCounter();
             updateProgressBar();
+            updateTradeButtons();
         }
     }
 </script>
